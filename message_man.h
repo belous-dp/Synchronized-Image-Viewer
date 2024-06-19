@@ -5,13 +5,15 @@
 
 class QTcpSocket;
 
-class MessageMan : QObject {
+class MessageMan : public QObject {
   Q_OBJECT
 
 public:
-  MessageMan() = delete;
+  explicit MessageMan(QObject* parent = nullptr);
   MessageMan(MessageMan const&) = delete;
-  explicit MessageMan(QTcpSocket* peer);
+  void setPeer(QTcpSocket* peer);
+  [[nodiscard]] bool isConnected() const;
+  void release();
   void sendMessage(QByteArray const& data);
   ~MessageMan() override;
 
