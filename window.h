@@ -1,6 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include "message_man.h"
 #include <QMainWindow>
 
 class Setup;
@@ -16,6 +17,7 @@ private slots:
   void onSetupFinished();
 
 private:
+  MessageMan messageMan;
   Setup* setupPopup;
   ViewArea* mViewArea;
 };
