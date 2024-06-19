@@ -7,10 +7,12 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
 qt_standard_project_setup()
 set(CMAKE_AUTORCC ON)
 
-add_executable(synchronized-image-viewer "main.cpp"
+add_executable(synchronized-image-viewer
+        main.cpp
         window.cpp
         view_area.cpp
         cursor.cpp
+        message_man.cpp
 )
 
 target_compile_options(synchronized-image-viewer PRIVATE -Wall)
