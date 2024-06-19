@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 
+class Setup;
 class ViewArea;
 
 class Window : public QMainWindow {
@@ -11,7 +12,11 @@ class Window : public QMainWindow {
 public:
   explicit Window(QWidget* parent = nullptr);
 
+private slots:
+  void onSetupFinished();
+
 private:
+  Setup* setupPopup;
   ViewArea* mViewArea;
 };
 

@@ -13,6 +13,7 @@ add_executable(synchronized-image-viewer
         view_area.cpp
         cursor.cpp
         message_man.cpp
+        setup.cpp
 )
 
 target_compile_options(synchronized-image-viewer PRIVATE -Wall)
