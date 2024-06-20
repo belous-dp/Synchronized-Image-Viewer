@@ -5,7 +5,6 @@
 
 #include <QLayout>
 #include <QTcpServer>
-#include <iostream>
 
 Window::Window(QWidget* parent)
     : QMainWindow(parent),
@@ -20,7 +19,7 @@ Window::Window(QWidget* parent)
 }
 
 void Window::onSetupFinished() {
-  std::cout << "setup finished; now show main window..." << std::endl;
+  qDebug() << "setup finished; now show main window...";
   setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
   show();
 }

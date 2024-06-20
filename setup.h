@@ -2,11 +2,14 @@
 #define SETUP_H
 
 #include <QDialog>
+#include <QAbstractSocket>
 
 class MessageMan;
 class QRadioButton;
+class QTcpSocket;
 class QTcpServer;
 class QLabel;
+class QLineEdit;
 
 class Setup : public QDialog {
   Q_OBJECT
@@ -30,13 +33,18 @@ signals:
 private slots:
   void onOptionChosen();
   void onNewConnection();
+  void displayError(QAbstractSocket::SocketError socketError);
+  void tryConnect();
+  void finishClientSetup();
 
 private:
   MessageMan* messageMan;
   QRadioButton* clientButton;
   QRadioButton* serverButton;
+  QTcpSocket* client;
   QTcpServer* server;
   QLabel* infoLabel;
+  QLineEdit* ipLineEdit;
 };
 
 #endif // SETUP_H

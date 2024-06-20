@@ -1,6 +1,6 @@
 #include "message_man.h"
 #include <QTcpSocket>
-#include <iostream>
+#include <stdexcept>
 
 MessageMan::MessageMan(QObject* parent) : QObject(parent), socket(nullptr) {}
 
@@ -29,20 +29,41 @@ MessageMan::~MessageMan() {
   }
 }
 
+namespace {
+QByteArray sizeToBytes(QByteArray const& data) {
+  auto buf = QByteArray{};
+  auto sz = static_cast<quint16>(data.size());
+  buf.append(static_cast<char>((sz >> 0) & 0xFF));
+  buf.append(static_cast<char>((sz >> 8) & 0xFF));
+  return buf;
+}
+
+qsizetype scanSize(QTcpSocket* socket) {
+  auto c = char{};
+  auto sz = quint16{};
+  socket->getChar(&c);
+  sz |= c << 0;
+  socket->getChar(&c);
+  sz |= c << 8;
+  return sz;
+}
+} // namespace
+
 void MessageMan::sendMessage(QByteArray const& data) {
   if (!isConnected()) {
     throw std::runtime_error("sendMessage: not connected");
   }
-  std::cout << "sending message (" << data.size() << "): " << data.data() << std::endl;
-  socket->write(QByteArray::number(data.size()));
+  qDebug() << "sending message... size=" << data.size();
+  qDebug() << "message: " << data;
+  socket->write(sizeToBytes(data));
   socket->write(data);
 }
 
 void MessageMan::processMessage() {
   assert(socket);
-  auto size = socket->read(sizeof(qlonglong)).toLongLong();
-  std::cout << "message received. size=" << size << std::endl;
+  auto size = scanSize(socket);
   auto data = socket->read(size);
-  std::cout << "message: " << data.data() << std::endl;
+  qDebug() << "message received. size=" << size;
+  qDebug() << "message: " << data;
   emit messageReady(data);
 }

@@ -1,26 +1,31 @@
 #include "setup.h"
 #include "message_man.h"
 #include <QCloseEvent>
+#include <QDialog>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
-#include <QTimer>
 #include <QNetworkInterface>
+#include <QPushButton>
 #include <QRadioButton>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QTimer>
 #include <QVBoxLayout>
-#include <iostream>
+#include <chrono>
 
 Setup::Setup(MessageMan* messageMan, QWidget* parent)
     : QDialog(parent),
       messageMan(messageMan),
+      client(nullptr),
       server(nullptr),
-      infoLabel(nullptr) {
+      infoLabel(nullptr),
+      ipLineEdit(nullptr) {
   clientButton = new QRadioButton(tr("&client mode"));
   serverButton = new QRadioButton(tr("&server mode"));
   connect(clientButton, &QRadioButton::clicked, this, &Setup::onOptionChosen);
   connect(serverButton, &QRadioButton::clicked, this, &Setup::onOptionChosen);
-  auto layout = new QVBoxLayout{};
+  auto layout = new QGridLayout{};
   layout->addWidget(clientButton);
   layout->addWidget(serverButton);
   setLayout(layout);
@@ -31,7 +36,7 @@ void Setup::reject() {
 }
 
 void Setup::closeEvent(QCloseEvent* event) {
-  std::cout << "closed" << std::endl;
+  qDebug() << "closed";
   emit setupFinished();
   event->accept();
 }
@@ -63,17 +68,82 @@ void Setup::onOptionChosen() {
 }
 
 void Setup::clientSetup() {
-  std::cout << "client mode" << std::endl;
-  close();
+  qDebug() << "client mode";
+
+  client = new QTcpSocket(messageMan);
+  connect(client, &QTcpSocket::errorOccurred, this, &Setup::displayError);
+  connect(client, &QTcpSocket::connected, this, &Setup::finishClientSetup);
+
+  auto ipLabel = new QLabel{tr("&server ip:port")};
+  ipLineEdit = new QLineEdit{};
+  ipLabel->setBuddy(ipLineEdit);
+
+  infoLabel = new QLabel{tr("waiting for server address...")};
+
+  auto connectButton = new QPushButton{tr("Connect")};
+  connect(connectButton, &QPushButton::clicked, this, &Setup::tryConnect);
+
+  dynamic_cast<QGridLayout*>(layout())->addWidget(ipLabel, 0, 0);
+  dynamic_cast<QGridLayout*>(layout())->addWidget(ipLineEdit, 0, 1);
+  dynamic_cast<QGridLayout*>(layout())->addWidget(infoLabel, 1, 0);
+  dynamic_cast<QGridLayout*>(layout())->addWidget(connectButton, 2, 0);
+
+  ipLineEdit->setFocus();
+}
+
+void Setup::tryConnect() {
+  client->abort();
+  auto saddr = QUrl::fromUserInput(ipLineEdit->text());
+  qDebug() << "host: " << saddr.host();
+  qDebug() << "port: " << saddr.port();
+  client->connectToHost(saddr.host(), saddr.port());
+}
+
+void Setup::finishClientSetup() {
+  messageMan->setPeer(client);
+  infoLabel->setText(tr("Connected!"));
+  using namespace std::chrono_literals;
+  QTimer::singleShot(2s, this, &Setup::close);
+
+  // test
+  QByteArray data;
+  QDataStream out(&data, QIODevice::WriteOnly);
+  out.setVersion(QDataStream::Qt_6_7);
+  out << "hello from client!";
+  messageMan->sendMessage(data);
+}
+
+void Setup::displayError(QAbstractSocket::SocketError socketError) {
+  switch (socketError) {
+  case QAbstractSocket::RemoteHostClosedError:
+    QMessageBox::information(this, tr("SIV Client"),
+                             tr("Remote host closed before finished setup"));
+    break;
+  case QAbstractSocket::HostNotFoundError:
+    QMessageBox::information(this, tr("SIV Client"),
+                             tr("The host was not found. Please check the "
+                                "host name and port settings."));
+    break;
+  case QAbstractSocket::ConnectionRefusedError:
+    QMessageBox::information(this, tr("SIV Client"),
+                             tr("The connection was refused by the peer. "
+                                "Make sure the SIV server is running, "
+                                "and check that the host name and port "
+                                "settings are correct."));
+    break;
+  default:
+    QMessageBox::information(this, tr("SIV Client"),
+                             tr("The following error occurred: %1.").arg(client->errorString()));
+  }
 }
 
 void Setup::serverSetup() {
-  std::cout << "server mode" << std::endl;
+  qDebug() << "server mode";
   server = new QTcpServer(messageMan);
   if (!server->listen()) {
     QMessageBox::critical(this, tr("Synchronized Image Viewer"),
                           tr("Unable to start the server: %1.").arg(server->errorString()));
-    delete server; // todo move to closeEvent()?
+    delete server;
     close();
     return;
   }
