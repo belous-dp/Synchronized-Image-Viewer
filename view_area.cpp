@@ -1,8 +1,11 @@
 #include "view_area.h"
 #include <QLabel>
 
-ViewArea::ViewArea(QWidget* parent) : QWidget(parent), mCursor(this), imageLabel(new QLabel(this)) {
-  mCursor.setEnabled(false);
+ViewArea::ViewArea(MessageMan* messageMan, QWidget* parent)
+    : QWidget(parent),
+      cursor(messageMan, this),
+      imageLabel(new QLabel(this)) {
+  cursor.setEnabled(false);
   // imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   // imageLabel->setScaledContents(true);
   imageLabel->setEnabled(false);
@@ -14,7 +17,7 @@ void ViewArea::setImage(QImage const& image) {
   imageLabel->setPixmap(QPixmap::fromImage(image));
   imageLabel->adjustSize();
   imageLabel->setEnabled(true);
-  mCursor.setEnabled(true);
-  mCursor.raise();
+  cursor.setEnabled(true);
+  cursor.raise();
   adjustSize();
 }

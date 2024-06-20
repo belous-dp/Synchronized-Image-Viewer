@@ -4,7 +4,6 @@
 #include "view_area.h"
 
 #include <QFileDialog>
-#include <QGuiApplication>
 #include <QImageReader>
 #include <QLayout>
 #include <QMenuBar>
@@ -38,7 +37,7 @@ void initializeImageOpenFileDialog(QFileDialog& dialog) {
 Window::Window(QWidget* parent)
     : QMainWindow(parent),
       setupPopup(new Setup(&messageMan, this)),
-      viewArea(new ViewArea),
+      viewArea(new ViewArea(&messageMan)),
       scrollArea(new QScrollArea) {
   setMinimumSize(300, 200);
   setupPopup->setAttribute(Qt::WA_DeleteOnClose);

@@ -5,17 +5,18 @@
 
 #include <QWidget>
 
+class MessageMan;
 class QLabel;
 
 class ViewArea : public QWidget {
   Q_OBJECT
 
 public:
-  explicit ViewArea(QWidget* parent = nullptr);
+  explicit ViewArea(MessageMan* messageMan, QWidget* parent = nullptr);
   void setImage(QImage const& image);
 
 private:
-  Cursor mCursor;
+  Cursor cursor;
   QLabel* imageLabel;
 };
 
