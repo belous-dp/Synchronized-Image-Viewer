@@ -25,6 +25,8 @@ Setup::Setup(MessageMan* messageMan, QWidget* parent)
   serverButton = new QRadioButton(tr("&server mode"));
   connect(clientButton, &QRadioButton::clicked, this, &Setup::onOptionChosen);
   connect(serverButton, &QRadioButton::clicked, this, &Setup::onOptionChosen);
+  clientButton->setMinimumSize(200, 30);
+  serverButton->setMinimumSize(200, 30);
   auto layout = new QGridLayout{};
   layout->addWidget(clientButton);
   layout->addWidget(serverButton);
@@ -75,7 +77,9 @@ void Setup::clientSetup() {
   connect(client, &QTcpSocket::connected, this, &Setup::finishClientSetup);
 
   auto ipLabel = new QLabel{tr("&server ip:port")};
+  ipLabel->setMinimumWidth(100);
   ipLineEdit = new QLineEdit{};
+  ipLineEdit->setMinimumWidth(150);
   ipLabel->setBuddy(ipLineEdit);
 
   infoLabel = new QLabel{tr("waiting for server address...")};
@@ -85,8 +89,8 @@ void Setup::clientSetup() {
 
   dynamic_cast<QGridLayout*>(layout())->addWidget(ipLabel, 0, 0);
   dynamic_cast<QGridLayout*>(layout())->addWidget(ipLineEdit, 0, 1);
-  dynamic_cast<QGridLayout*>(layout())->addWidget(infoLabel, 1, 0);
-  dynamic_cast<QGridLayout*>(layout())->addWidget(connectButton, 2, 0);
+  dynamic_cast<QGridLayout*>(layout())->addWidget(infoLabel, 1, 0, 1, 2);
+  dynamic_cast<QGridLayout*>(layout())->addWidget(connectButton, 2, 0, 1, 2);
 
   ipLineEdit->setFocus();
 }
@@ -161,6 +165,7 @@ void Setup::serverSetup() {
   }
 
   infoLabel = new QLabel{};
+  infoLabel->setMinimumSize(200, 70);
   layout()->addWidget(infoLabel);
   infoLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
   infoLabel->setText(tr("server is up\n\n%1:%2\n\n").arg(ipAddress).arg(server->serverPort()));

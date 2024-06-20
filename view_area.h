@@ -3,16 +3,20 @@
 
 #include "cursor.h"
 
-#include <QWidget>
+#include <QScrollArea>
 
-class ViewArea : public QWidget {
+class QLabel;
+
+class ViewArea : public QScrollArea {
   Q_OBJECT
 
 public:
   explicit ViewArea(QWidget* parent = nullptr);
+  void setImage(QImage const& image);
 
 private:
   Cursor mCursor;
+  QLabel* imageLabel;
 };
 
 #endif // VIEW_AREA_H

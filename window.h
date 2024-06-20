@@ -15,6 +15,10 @@ public:
 
 private slots:
   void onSetupFinished();
+  void openImage();
+
+private:
+  bool loadImage(QString const& fileName);
 
 private:
   MessageMan messageMan;
