@@ -3,11 +3,11 @@
 
 #include "cursor.h"
 
-#include <QScrollArea>
+#include <QWidget>
 
 class QLabel;
 
-class ViewArea : public QScrollArea {
+class ViewArea : public QWidget {
   Q_OBJECT
 
 public:

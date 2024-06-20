@@ -6,6 +6,7 @@
 
 class Setup;
 class ViewArea;
+class QScrollArea;
 
 class Window : public QMainWindow {
   Q_OBJECT
@@ -23,7 +24,8 @@ private:
 private:
   MessageMan messageMan;
   Setup* setupPopup;
-  ViewArea* mViewArea;
+  ViewArea* viewArea;
+  QScrollArea* scrollArea;
 };
 
 #endif // WINDOW_H

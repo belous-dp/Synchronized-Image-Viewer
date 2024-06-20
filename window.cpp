@@ -10,7 +10,9 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <QScreen>
 #include <QTcpServer>
+#include <QScrollArea>
 
 namespace {
 void initializeImageOpenFileDialog(QFileDialog& dialog) {
@@ -36,20 +38,25 @@ void initializeImageOpenFileDialog(QFileDialog& dialog) {
 Window::Window(QWidget* parent)
     : QMainWindow(parent),
       setupPopup(new Setup(&messageMan, this)),
-      mViewArea(new ViewArea(this)) {
+      viewArea(new ViewArea),
+      scrollArea(new QScrollArea) {
   setMinimumSize(300, 200);
   setupPopup->setAttribute(Qt::WA_DeleteOnClose);
   connect(setupPopup, &Setup::setupFinished, this, &Window::onSetupFinished);
-  setCentralWidget(mViewArea);
   setWindowState(Qt::WindowMinimized);
   setupPopup->show();
 }
 
 void Window::onSetupFinished() {
   qDebug() << "setup finished; now show main window...";
+  scrollArea->setWidget(viewArea);
+  setCentralWidget(scrollArea);
+
   auto fileMenu = menuBar()->addMenu(tr("&File"));
   auto openAct = fileMenu->addAction(tr("&Open"), this, &Window::openImage);
   openAct->setShortcut(QKeySequence::Open);
+
+  resize(QGuiApplication::primaryScreen()->availableSize() / 2);
   setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
   show();
 }
@@ -70,8 +77,7 @@ bool Window::loadImage(QString const& fileName) {
         tr("Cannot load %1: %2").arg(QDir::toNativeSeparators(fileName), reader.errorString()));
     return false;
   }
-  mViewArea->setImage(image);
-  adjustSize();
+  viewArea->setImage(image);
   setWindowFilePath(fileName);
   return true;
 }
