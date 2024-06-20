@@ -1,8 +1,11 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <QObject>
+#include <QBuffer>
+#include <QXmlStreamWriter>
 
+
+class QBuffer;
 class QTcpSocket;
 
 class MessageMan : public QObject {
@@ -15,6 +18,9 @@ public:
   [[nodiscard]] bool isConnected() const;
   void release();
   void sendMessage(QByteArray const& data);
+  void sendMessage(QByteArray const& data, qsizetype size);
+  QXmlStreamWriter& getStreamWriter();
+  void flushMessage();
   ~MessageMan() override;
 
 signals:
@@ -24,7 +30,9 @@ private slots:
   void processMessage();
 
 private:
-  QByteArray buf;
+  bool firstWrite;
+  QBuffer* writeBuf;
+  QXmlStreamWriter writer;
   QTcpSocket* socket;
 };
 
