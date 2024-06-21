@@ -46,5 +46,5 @@ void Cursor::updateNetworkInfo() {
   messageMan->getStreamWriter().writeAttribute("x", QString::number(lastPos.x()));
   messageMan->getStreamWriter().writeAttribute("y", QString::number(lastPos.y()));
   messageMan->getStreamWriter().writeEndElement();
-  messageMan->flushMessage();
+  messageMan->finishWrite();
 }

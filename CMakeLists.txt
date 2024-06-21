@@ -7,12 +7,13 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
 qt_standard_project_setup()
 set(CMAKE_AUTORCC ON)
 
+add_subdirectory(message_man)
+
 add_executable(synchronized-image-viewer
         main.cpp
         window.cpp
         view_area.cpp
         cursor.cpp
-        message_man.cpp
         setup.cpp
 )
 
@@ -41,4 +42,8 @@ endif ()
 set_property(TARGET synchronized-image-viewer PROPERTY
   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(synchronized-image-viewer PUBLIC Qt6::Core Qt6::Widgets Qt6::Network)
+target_link_libraries(synchronized-image-viewer PUBLIC Qt6::Core Qt6::Widgets Qt6::Network message_man)
+target_include_directories(synchronized-image-viewer PUBLIC
+        "${PROJECT_BINARY_DIR}"
+        "${PROJECT_SOURCE_DIR}/message_man"
+)

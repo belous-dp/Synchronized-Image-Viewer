@@ -6,10 +6,15 @@
 MessageMan::MessageMan(QObject* parent)
     : QObject(parent),
       firstWrite(true),
+      firstRead(true),
+      leftRead(0),
       writeBuf(new QBuffer(this)),
       writer(writeBuf),
+      reader(&readBuf),
       socket(nullptr) {
   writeBuf->open(QIODeviceBase::OpenModeFlag::WriteOnly);
+  readBuf.open(QIODeviceBase::ReadOnly);
+  // reader.setNamespaceProcessing(false);
   writer.setAutoFormatting(true);
 }
 
@@ -72,8 +77,11 @@ void MessageMan::sendMessage(QByteArray const& data, qsizetype size) {
   if (!isConnected()) {
     return;
   }
-  qDebug() << "sending message...` size=" << size;
-  qDebug() << "message: " << data << " (truncated to `size` bytes)";
+  qDebug() << "sending message of size" << size;
+  qDebug() << "message: " << data
+           << (data.size() > size
+                   ? " (except last " + QString::number(data.size() - size) + " bytes)"
+                   : "");
   socket->write(sizeToBytes(size));
   socket->write(data, size);
 }
@@ -87,18 +95,38 @@ QXmlStreamWriter& MessageMan::getStreamWriter() {
   return writer;
 }
 
-void MessageMan::flushMessage() {
+void MessageMan::finishWrite() {
   writer.writeEndDocument();
-  sendMessage(writeBuf->data(), writeBuf->pos());;
+  sendMessage(writeBuf->data(), writeBuf->pos());
   writeBuf->reset();
   firstWrite = true;
 }
 
 void MessageMan::processMessage() {
   assert(socket);
-  auto size = scanSize(socket);
-  auto data = socket->read(size);
-  qDebug() << "message received. size=" << size;
-  qDebug() << "message: " << data;
-  emit messageReady(data);
+  if (leftRead == 0) {
+    leftRead = scanSize(socket);
+    readBuf.buffer().resize(leftRead);
+  }
+  leftRead -= socket->read(readBuf.buffer().end() - leftRead, leftRead);
+  qDebug() << "part of message received. full message size: " << readBuf.size()
+           << ". current message: " << readBuf.data();
+  if (leftRead == 0) {
+    emit messageReady();
+  }
 }
+
+QXmlStreamReader& MessageMan::getStreamReader() {
+  if (firstRead) {
+    firstRead = false;
+    assert(reader.isStartDocument());
+  }
+  return reader;
+}
+
+void MessageMan::finishRead() {
+  readBuf.reset();
+  firstRead = true;
+}
+
+
