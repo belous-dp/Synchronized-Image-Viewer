@@ -9,6 +9,7 @@ Cursor::Cursor(MessageMan* messageMan, QWidget* parent)
     : QWidget(parent),
       messageMan(messageMan),
       timer(new QTimer(this)) {
+  connect(messageMan, &MessageMan::messageReady, this, &Cursor::updateCursorPos);
   connect(timer, &QTimer::timeout, this, &Cursor::updateNetworkInfo);
   using namespace std::chrono_literals;
   timer->start(50ms);
@@ -17,7 +18,6 @@ Cursor::Cursor(MessageMan* messageMan, QWidget* parent)
 void Cursor::mousePressEvent(QMouseEvent* event) {
   offset = event->pos();
   timer->start();
-  assert(timer->interval() == 50);
 }
 
 void Cursor::mouseMoveEvent(QMouseEvent* event) {
@@ -29,7 +29,6 @@ void Cursor::mouseMoveEvent(QMouseEvent* event) {
 void Cursor::mouseReleaseEvent(QMouseEvent* event) {
   updateNetworkInfo();
   timer->stop();
-  assert(timer->interval() == 50);
 }
 
 void Cursor::paintEvent(QPaintEvent* event) {
@@ -47,4 +46,18 @@ void Cursor::updateNetworkInfo() {
   messageMan->getStreamWriter().writeAttribute("y", QString::number(lastPos.y()));
   messageMan->getStreamWriter().writeEndElement();
   messageMan->finishWrite();
+}
+
+void Cursor::updateCursorPos() {
+  auto& reader = messageMan->getStreamReader();
+  while (!reader.atEnd() && reader.readNextStartElement() && reader.name() != tr("cursor")) {
+    reader.skipCurrentElement();
+  }
+  assert(reader.isStartElement() && reader.name() == tr("cursor"));
+  assert(reader.attributes().hasAttribute("x"));
+  assert(reader.attributes().hasAttribute("y"));
+  qDebug() << "received x=" << reader.attributes().value("x").toInt()
+           << " y=" << reader.attributes().value("y").toInt();
+  move(reader.attributes().value("x").toInt(), reader.attributes().value("y").toInt());
+  messageMan->finishRead();
 }

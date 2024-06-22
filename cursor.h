@@ -20,6 +20,7 @@ private:
 
 private slots:
   void updateNetworkInfo();
+  void updateCursorPos();
 
 private:
   QPoint offset;

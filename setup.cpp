@@ -108,13 +108,6 @@ void Setup::finishClientSetup() {
   infoLabel->setText(tr("Connected!"));
   using namespace std::chrono_literals;
   QTimer::singleShot(2s, this, &Setup::close);
-
-  // test
-  QByteArray data;
-  QDataStream out(&data, QIODevice::WriteOnly);
-  out.setVersion(QDataStream::Qt_6_7);
-  out << "hello from client!";
-  messageMan->sendMessage(data);
 }
 
 void Setup::displayError(QAbstractSocket::SocketError socketError) {
@@ -181,11 +174,4 @@ void Setup::onNewConnection() {
   infoLabel->setText("Connected!");
   using namespace std::chrono_literals;
   QTimer::singleShot(2s, this, &Setup::close);
-
-  // test
-  QByteArray data;
-  QDataStream out(&data, QIODevice::WriteOnly);
-  out.setVersion(QDataStream::Qt_6_7);
-  out << "hello from server!";
-  messageMan->sendMessage(data);
 }

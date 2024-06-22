@@ -117,16 +117,13 @@ void MessageMan::processMessage() {
 }
 
 QXmlStreamReader& MessageMan::getStreamReader() {
-  if (firstRead) {
-    firstRead = false;
-    assert(reader.isStartDocument());
-  }
   return reader;
 }
 
 void MessageMan::finishRead() {
+  reader.clear();
   readBuf.reset();
-  firstRead = true;
+  reader.setDevice(&readBuf);
 }
 
 
