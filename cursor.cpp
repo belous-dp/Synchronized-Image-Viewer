@@ -12,7 +12,7 @@ Cursor::Cursor(MessageMan* messageMan, QWidget* parent)
   connect(messageMan, &MessageMan::messageReady, this, &Cursor::updateCursorPos);
   connect(timer, &QTimer::timeout, this, &Cursor::updateNetworkInfo);
   using namespace std::chrono_literals;
-  timer->start(50ms);
+  timer->setInterval(25ms);
 }
 
 void Cursor::mousePressEvent(QMouseEvent* event) {
@@ -52,6 +52,7 @@ void Cursor::updateNetworkInfo() {
 }
 
 void Cursor::updateCursorPos() {
+  // timer->stop(); // todo synchronization issues
   auto& reader = messageMan->getStreamReader();
   while (!reader.atEnd() && reader.readNextStartElement() && reader.name() != tr("cursor")) {
     reader.skipCurrentElement();
@@ -59,8 +60,6 @@ void Cursor::updateCursorPos() {
   assert(reader.isStartElement() && reader.name() == tr("cursor"));
   assert(reader.attributes().hasAttribute("x"));
   assert(reader.attributes().hasAttribute("y"));
-  qDebug() << "received x=" << reader.attributes().value("x").toInt()
-           << " y=" << reader.attributes().value("y").toInt();
   move(reader.attributes().value("x").toInt(), reader.attributes().value("y").toInt());
   messageMan->finishRead();
 }

@@ -14,7 +14,7 @@ MessageMan::MessageMan(QObject* parent)
       socket(nullptr) {
   writeBuf->open(QIODeviceBase::OpenModeFlag::WriteOnly);
   readBuf.open(QIODeviceBase::ReadOnly);
-  // reader.setNamespaceProcessing(false);
+  reader.setNamespaceProcessing(false);
   writer.setAutoFormatting(true);
 }
 
@@ -77,10 +77,9 @@ void MessageMan::sendMessage(QByteArray const& data, qsizetype size) {
   if (!isConnected()) {
     return;
   }
-  qDebug() << "sending message of size" << size;
-  qDebug() << "message: " << data
+  qDebug() << "sending message of size" << size << ". message:" << data
            << (data.size() > size
-                   ? " (except last " + QString::number(data.size() - size) + " bytes)"
+                   ? "(except last " + QString::number(data.size() - size) + " byte(s))"
                    : "");
   socket->write(sizeToBytes(size));
   socket->write(data, size);
@@ -109,8 +108,8 @@ void MessageMan::processMessage() {
     readBuf.buffer().resize(leftRead);
   }
   leftRead -= socket->read(readBuf.buffer().end() - leftRead, leftRead);
-  qDebug() << "part of message received. full message size: " << readBuf.size()
-           << ". current message: " << readBuf.data();
+  qDebug() << "part of message received. full message size:" << readBuf.size()
+           << ". current message:" << readBuf.data();
   if (leftRead == 0) {
     emit messageReady();
   }
@@ -125,5 +124,3 @@ void MessageMan::finishRead() {
   readBuf.reset();
   reader.setDevice(&readBuf);
 }
-
-
