@@ -33,7 +33,10 @@ void Cursor::mouseReleaseEvent(QMouseEvent* event) {
 
 void Cursor::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(0, 0, 30, 30, Qt::white);
+  painter.fillRect(13, 0, 4, 30, Qt::white);
+  painter.fillRect(0, 13, 30, 4, Qt::white);
+  painter.fillRect(14, 1, 2, 28, Qt::black);
+  painter.fillRect(1, 14, 28, 2, Qt::black);
 }
 
 void Cursor::updateNetworkInfo() {
