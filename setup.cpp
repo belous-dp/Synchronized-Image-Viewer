@@ -76,36 +76,56 @@ void Setup::clientSetup() {
   connect(client, &QTcpSocket::errorOccurred, this, &Setup::displayError);
   connect(client, &QTcpSocket::connected, this, &Setup::finishClientSetup);
 
-  auto ipLabel = new QLabel{tr("&server ip:port")};
+  auto ipLabel = new QLabel{tr("Ho&st")};
   ipLabel->setMinimumWidth(100);
   ipLineEdit = new QLineEdit{};
   ipLineEdit->setMinimumWidth(150);
   ipLabel->setBuddy(ipLineEdit);
 
-  infoLabel = new QLabel{tr("waiting for server address...")};
+  infoLabel = new QLabel{tr("Waiting for server hostname:port...")};
 
-  auto connectButton = new QPushButton{tr("Connect")};
-  connect(connectButton, &QPushButton::clicked, this, &Setup::tryConnect);
+  button = new QPushButton{tr("Connect")};
+  connect(button, &QPushButton::clicked, this, &Setup::tryConnect);
+  button->setEnabled(false);
+  connect(ipLineEdit, &QLineEdit::textChanged, [this]() { button->setEnabled(true); });
+  connect(ipLineEdit, &QLineEdit::returnPressed, [this]() {
+    if (button->isEnabled()) {
+      tryConnect();
+    }
+  });
 
   dynamic_cast<QGridLayout*>(layout())->addWidget(ipLabel, 0, 0);
   dynamic_cast<QGridLayout*>(layout())->addWidget(ipLineEdit, 0, 1);
   dynamic_cast<QGridLayout*>(layout())->addWidget(infoLabel, 1, 0, 1, 2);
-  dynamic_cast<QGridLayout*>(layout())->addWidget(connectButton, 2, 0, 1, 2);
+  dynamic_cast<QGridLayout*>(layout())->addWidget(button, 2, 0, 1, 2);
 
   ipLineEdit->setFocus();
 }
 
 void Setup::tryConnect() {
   client->abort();
+  button->setEnabled(false);
   auto saddr = QUrl::fromUserInput(ipLineEdit->text());
   qDebug() << "host: " << saddr.host();
   qDebug() << "port: " << saddr.port();
+  if (!saddr.isValid()) {
+    QMessageBox::information(this, tr("SIV Client"), tr("Invalid hostname or port."));
+    return;
+  }
+  infoLabel->setText(tr("Connecting..."));
   client->connectToHost(saddr.host(), saddr.port());
 }
 
 void Setup::finishClientSetup() {
+  disconnect(client, &QTcpSocket::errorOccurred, this, &Setup::displayError);
   messageMan->setPeer(client);
   infoLabel->setText(tr("Connected!"));
+  ipLineEdit->setEnabled(false);
+  button->setText(tr("OK"));
+  button->setEnabled(true);
+  button->setFocus();
+  disconnect(button, &QPushButton::clicked, this, &Setup::tryConnect);
+  connect(button, &QPushButton::clicked, this, &Setup::close);
   using namespace std::chrono_literals;
   QTimer::singleShot(2s, this, &Setup::close);
 }
@@ -132,13 +152,14 @@ void Setup::displayError(QAbstractSocket::SocketError socketError) {
     QMessageBox::information(this, tr("SIV Client"),
                              tr("The following error occurred: %1.").arg(client->errorString()));
   }
+  infoLabel->setText(tr("Waiting for server hostname:port..."));
 }
 
 void Setup::serverSetup() {
   qDebug() << "server mode";
   server = new QTcpServer(messageMan);
   if (!server->listen()) {
-    QMessageBox::critical(this, tr("Synchronized Image Viewer"),
+    QMessageBox::critical(this, tr("SIV Server"),
                           tr("Unable to start the server: %1.").arg(server->errorString()));
     delete server;
     close();

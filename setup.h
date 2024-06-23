@@ -10,6 +10,7 @@ class QTcpSocket;
 class QTcpServer;
 class QLabel;
 class QLineEdit;
+class QPushButton;
 
 class Setup : public QDialog {
   Q_OBJECT
@@ -45,6 +46,7 @@ private:
   QTcpServer* server;
   QLabel* infoLabel;
   QLineEdit* ipLineEdit;
+  QPushButton* button;
 };
 
 #endif // SETUP_H
