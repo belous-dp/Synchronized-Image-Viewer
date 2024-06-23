@@ -17,6 +17,7 @@ void ViewArea::setImage(QImage const& image) {
   imageLabel->setPixmap(QPixmap::fromImage(image));
   imageLabel->adjustSize();
   imageLabel->setEnabled(true);
+  cursor.setWorkAreaSize(image.size());
   cursor.setEnabled(true);
   cursor.raise();
   adjustSize();

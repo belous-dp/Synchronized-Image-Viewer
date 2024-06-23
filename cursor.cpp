@@ -9,10 +9,23 @@ Cursor::Cursor(MessageMan* messageMan, QWidget* parent)
     : QWidget(parent),
       messageMan(messageMan),
       timer(new QTimer(this)) {
+  // asserts needed in paintEvent
+  static_assert(INNER + OUTER * 2 <= SIDE);
+  static_assert(SIDE % 2 == 0);
+  static_assert(INNER % 2 == 0);
+  static_assert(INNER + OUTER > 0);
+  workArea = parent ? parent->rect() : rect();
   connect(messageMan, &MessageMan::messageReady, this, &Cursor::updateCursorPos);
   connect(timer, &QTimer::timeout, this, &Cursor::updateNetworkInfo);
   using namespace std::chrono_literals;
   timer->setInterval(25ms);
+}
+void Cursor::setWorkAreaSize(QSize const& newWorkAreaSize) {
+  if (!newWorkAreaSize.isValid()) {
+    throw std::invalid_argument("Cursor: invalid newWorkAreaSize");
+  }
+  // todo newWorkAreaSize < (SIDE, SIDE)?
+  workArea = QRect(QPoint(0, 0), newWorkAreaSize);
 }
 
 void Cursor::mousePressEvent(QMouseEvent* event) {
@@ -22,7 +35,10 @@ void Cursor::mousePressEvent(QMouseEvent* event) {
 
 void Cursor::mouseMoveEvent(QMouseEvent* event) {
   if (event->buttons() & Qt::LeftButton) {
-    this->move(mapToParent(event->pos() - offset)); // = move(pos() + delta)
+    auto newPos = mapToParent(event->pos() - offset); // = pos() + delta
+    if (workArea.contains(newPos.x() + SIDE / 2, newPos.y() + SIDE / 2)) {
+      this->move(newPos);
+    }
   }
 }
 
@@ -33,10 +49,10 @@ void Cursor::mouseReleaseEvent(QMouseEvent* event) {
 
 void Cursor::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(13, 0, 4, 30, Qt::white);
-  painter.fillRect(0, 13, 30, 4, Qt::white);
-  painter.fillRect(14, 1, 2, 28, Qt::black);
-  painter.fillRect(1, 14, 28, 2, Qt::black);
+  painter.fillRect(SIDE / 2 - INNER / 2 - OUTER, 0, INNER + 2 * OUTER, SIDE, Qt::white);
+  painter.fillRect(0, SIDE / 2 - INNER / 2 - OUTER, SIDE, INNER + 2 * OUTER, Qt::white);
+  painter.fillRect(SIDE / 2 - INNER / 2, OUTER, INNER, SIDE - 2 * OUTER, Qt::black);
+  painter.fillRect(OUTER, SIDE / 2 - INNER / 2, SIDE - 2 * OUTER, INNER, Qt::black);
 }
 
 void Cursor::updateNetworkInfo() {

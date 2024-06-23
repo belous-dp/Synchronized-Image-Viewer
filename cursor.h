@@ -11,6 +11,7 @@ class Cursor : public QWidget {
 
 public:
   explicit Cursor(MessageMan* messageMan, QWidget* parent = nullptr);
+  void setWorkAreaSize(QSize const& newWorkAreaSize);
 
 private:
   void mousePressEvent(QMouseEvent* event) override;
@@ -23,6 +24,10 @@ private slots:
   void updateCursorPos();
 
 private:
+  static constexpr int SIDE = 30;
+  static constexpr int INNER = 2;
+  static constexpr int OUTER = 1;
+  QRect workArea;
   QPoint offset;
   QPoint lastPos;
   MessageMan* messageMan;
