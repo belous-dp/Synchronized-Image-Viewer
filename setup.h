@@ -1,8 +1,8 @@
 #ifndef SETUP_H
 #define SETUP_H
 
-#include <QDialog>
 #include <QAbstractSocket>
+#include <QDialog>
 
 class MessageMan;
 class QRadioButton;
@@ -27,16 +27,17 @@ private:
 
   void clientSetup();
   void serverSetup();
+  void finishSetup();
 
 signals:
   void setupFinished();
 
 private slots:
   void onOptionChosen();
-  void onNewConnection();
   void displayError(QAbstractSocket::SocketError socketError);
   void tryConnect();
   void finishClientSetup();
+  void finishServerSetup();
 
 private:
   MessageMan* messageMan;

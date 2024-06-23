@@ -1,5 +1,6 @@
 #include "setup.h"
 #include "message_man.h"
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QDialog>
 #include <QLabel>
@@ -20,7 +21,8 @@ Setup::Setup(MessageMan* messageMan, QWidget* parent)
       client(nullptr),
       server(nullptr),
       infoLabel(nullptr),
-      ipLineEdit(nullptr) {
+      ipLineEdit(nullptr),
+      button(nullptr) {
   clientButton = new QRadioButton(tr("&client mode"));
   serverButton = new QRadioButton(tr("&server mode"));
   connect(clientButton, &QRadioButton::clicked, this, &Setup::onOptionChosen);
@@ -121,10 +123,14 @@ void Setup::finishClientSetup() {
   messageMan->setPeer(client);
   infoLabel->setText(tr("Connected!"));
   ipLineEdit->setEnabled(false);
+  finishSetup();
+}
+
+void Setup::finishSetup() {
+  disconnect(button, nullptr, nullptr, nullptr);
   button->setText(tr("OK"));
   button->setEnabled(true);
   button->setFocus();
-  disconnect(button, &QPushButton::clicked, this, &Setup::tryConnect);
   connect(button, &QPushButton::clicked, this, &Setup::close);
   using namespace std::chrono_literals;
   QTimer::singleShot(2s, this, &Setup::close);
@@ -180,19 +186,30 @@ void Setup::serverSetup() {
 
   infoLabel = new QLabel{};
   infoLabel->setMinimumSize(200, 70);
-  layout()->addWidget(infoLabel);
   infoLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
-  infoLabel->setText(tr("server is up\n\n%1:%2\n\n").arg(ipAddress).arg(server->serverPort()));
+  auto hostInfo = tr("%1:%2").arg(ipAddress).arg(server->serverPort());
+  infoLabel->setText(tr("server is up\n\n%1\n\n").arg(hostInfo));
 
-  connect(server, &QTcpServer::newConnection, this, &Setup::onNewConnection);
+  button = new QPushButton{tr("Copy host info")};
+  connect(button, &QPushButton::clicked, [this, hostInfo]() {
+    QGuiApplication::clipboard()->setText(hostInfo);
+    button->setText("Copied!");
+    using namespace std::chrono_literals;
+    QTimer::singleShot(1s, [this]() { button->setText("Copy host info"); });
+  });
+
+  layout()->addWidget(infoLabel);
+  layout()->addWidget(button);
+  button->setFocus();
+
+  connect(server, &QTcpServer::newConnection, this, &Setup::finishServerSetup);
 }
 
-void Setup::onNewConnection() {
+void Setup::finishServerSetup() {
   server->pauseAccepting();
   auto peer = server->nextPendingConnection();
   connect(peer, &QTcpSocket::disconnected, peer, &QObject::deleteLater);
   messageMan->setPeer(peer);
   infoLabel->setText("Connected!");
-  using namespace std::chrono_literals;
-  QTimer::singleShot(2s, this, &Setup::close);
+  finishSetup();
 }
