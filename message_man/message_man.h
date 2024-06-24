@@ -36,6 +36,7 @@ signals:
 
 private slots:
   void processMessage();
+  void deleteSocket();
 
 private:
   bool firstRead;

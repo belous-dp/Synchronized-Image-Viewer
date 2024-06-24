@@ -15,10 +15,14 @@ MessageMan::MessageMan(QObject* parent)
 
 void MessageMan::setPeer(QTcpSocket* peer) {
   if (isConnected()) {
-    throw std::invalid_argument("release socket first");
+    throw std::invalid_argument("MessageMan::setPeer: release socket first.");
+  }
+  if (peer == nullptr) {
+    throw std::invalid_argument("MessageMan::setPeer: peer must be non-null.");
   }
   socket = peer;
   connect(socket, &QTcpSocket::readyRead, this, &MessageMan::processMessage);
+  connect(socket, &QTcpSocket::disconnected, this, &MessageMan::deleteSocket);
 }
 
 bool MessageMan::isConnected() const {
@@ -28,6 +32,7 @@ bool MessageMan::isConnected() const {
 void MessageMan::release() {
   if (isConnected()) {
     disconnect(socket, &QTcpSocket::readyRead, this, &MessageMan::processMessage);
+    disconnect(socket, &QTcpSocket::disconnected, this, &MessageMan::deleteSocket);
     socket = nullptr;
   }
 }
@@ -96,6 +101,11 @@ void MessageMan::processMessage() {
   if (leftRead == 0) {
     emit messageReady();
   }
+}
+
+void MessageMan::deleteSocket() {
+  socket->deleteLater();
+  socket = nullptr;
 }
 
 QXmlStreamReader const& MessageMan::getStreamReader() const {

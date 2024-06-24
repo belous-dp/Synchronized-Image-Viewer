@@ -208,7 +208,6 @@ void Setup::serverSetup() {
 void Setup::finishServerSetup() {
   server->pauseAccepting();
   auto peer = server->nextPendingConnection();
-  connect(peer, &QTcpSocket::disconnected, peer, &QObject::deleteLater);
   messageMan->setPeer(peer);
   infoLabel->setText("Connected!");
   finishSetup();
