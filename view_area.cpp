@@ -1,7 +1,7 @@
 #include "view_area.h"
 #include <QLabel>
 
-ViewArea::ViewArea(MessageMan* messageMan, QWidget* parent)
+ViewArea::ViewArea(MessageMan const& messageMan, QWidget* parent)
     : QWidget(parent),
       cursor(messageMan, this),
       imageLabel(new QLabel(this)) {

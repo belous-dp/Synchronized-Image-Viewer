@@ -5,20 +5,19 @@
 #include <QTimer>
 #include <QXmlStreamWriter>
 
-Cursor::Cursor(MessageMan* messageMan, QWidget* parent)
+Cursor::Cursor(MessageMan const& messageMan, QWidget* parent)
     : QWidget(parent),
-      messageMan(messageMan),
-      timer(new QTimer(this)) {
+      messageManClient(&messageMan) {
   // asserts needed in paintEvent
   static_assert(INNER + OUTER * 2 <= SIDE);
   static_assert(SIDE % 2 == 0);
   static_assert(INNER % 2 == 0);
   static_assert(INNER + OUTER > 0);
   workArea = parent ? parent->rect() : rect();
-  connect(messageMan, &MessageMan::messageReady, this, &Cursor::updateCursorPos);
-  connect(timer, &QTimer::timeout, this, &Cursor::updateNetworkInfo);
+  connect(&messageMan, &MessageMan::messageReady, this, &Cursor::updateCursorPos);
+  connect(&timer, &QTimer::timeout, this, &Cursor::updateNetworkInfo);
   using namespace std::chrono_literals;
-  timer->setInterval(25ms);
+  timer.setInterval(25ms);
 }
 void Cursor::setWorkAreaSize(QSize const& newWorkAreaSize) {
   if (!newWorkAreaSize.isValid()) {
@@ -30,7 +29,7 @@ void Cursor::setWorkAreaSize(QSize const& newWorkAreaSize) {
 
 void Cursor::mousePressEvent(QMouseEvent* event) {
   offset = event->pos();
-  timer->start();
+  timer.start();
 }
 
 void Cursor::mouseMoveEvent(QMouseEvent* event) {
@@ -44,7 +43,7 @@ void Cursor::mouseMoveEvent(QMouseEvent* event) {
 
 void Cursor::mouseReleaseEvent(QMouseEvent* event) {
   updateNetworkInfo();
-  timer->stop();
+  timer.stop();
 }
 
 void Cursor::paintEvent(QPaintEvent* event) {
@@ -60,22 +59,23 @@ void Cursor::updateNetworkInfo() {
     return;
   }
   lastPos = pos();
-  messageMan->getStreamWriter().writeStartElement("cursor");
-  messageMan->getStreamWriter().writeAttribute("x", QString::number(lastPos.x()));
-  messageMan->getStreamWriter().writeAttribute("y", QString::number(lastPos.y()));
-  messageMan->getStreamWriter().writeEndElement();
-  messageMan->finishWrite();
+  messageManClient.getStreamWriter().writeStartElement("cursor");
+  messageManClient.getStreamWriter().writeAttribute("x", QString::number(lastPos.x()));
+  messageManClient.getStreamWriter().writeAttribute("y", QString::number(lastPos.y()));
+  messageManClient.getStreamWriter().writeEndElement();
+  messageManClient.finishWrite();
 }
 
 void Cursor::updateCursorPos() {
   // timer->stop(); // todo synchronization issues
-  auto& reader = messageMan->getStreamReader();
-  while (!reader.atEnd() && reader.readNextStartElement() && reader.name() != tr("cursor")) {
-    reader.skipCurrentElement();
+  auto& reader = messageManClient.getStreamReader();
+  while (!reader.atEnd() && messageManClient.xmlReadNextStartElement() &&
+         reader.name() != tr("cursor")) {
+    messageManClient.xmlSkipCurrentElement();
   }
   assert(reader.isStartElement() && reader.name() == tr("cursor"));
   assert(reader.attributes().hasAttribute("x"));
   assert(reader.attributes().hasAttribute("y"));
   move(reader.attributes().value("x").toInt(), reader.attributes().value("y").toInt());
-  messageMan->finishRead();
+  messageManClient.finishRead();
 }

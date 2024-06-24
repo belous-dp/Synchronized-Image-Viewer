@@ -1,9 +1,10 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "client.h"
+
 #include <QBuffer>
 #include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 class QBuffer;
 class QTcpSocket;
@@ -18,35 +19,29 @@ public:
   [[nodiscard]] bool isConnected() const;
   void release();
 
-  void sendMessage(QByteArray const& data);
-  void sendMessage(QByteArray const& data, qsizetype size);
+  void sendMessage(QByteArray const& data) const;
+  void sendMessage(QByteArray const& data, qsizetype size) const;
 
   // stream-based API
-  QXmlStreamWriter& getStreamWriter(); // todo move to write_client
-  void finishWrite(); // move to write_client
-  // todo WriteClient getWriteClient()
-  QXmlStreamReader& getStreamReader();
-  void finishRead();
-
-
-
+  Client getClient() const;
+  QXmlStreamReader const& getStreamReader() const;
+  bool xmlReadNextStartElement() const;
+  void xmlSkipCurrentElement() const;
+  void finishRead() const;
 
   ~MessageMan() override;
 
 signals:
-  void messageReady();
+  void messageReady() const;
 
 private slots:
   void processMessage();
 
 private:
-  bool firstWrite; // todo move to write_client
   bool firstRead;
   uint32_t leftRead;
-  QBuffer* writeBuf; // move to write_client
-  QBuffer readBuf;
-  QXmlStreamWriter writer; // move to write_client
-  QXmlStreamReader reader;
+  mutable QBuffer readBuf;
+  mutable QXmlStreamReader reader;
   QTcpSocket* socket;
 };
 

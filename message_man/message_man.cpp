@@ -5,17 +5,12 @@
 
 MessageMan::MessageMan(QObject* parent)
     : QObject(parent),
-      firstWrite(true),
       firstRead(true),
       leftRead(0),
-      writeBuf(new QBuffer(this)),
-      writer(writeBuf),
       reader(&readBuf),
       socket(nullptr) {
-  writeBuf->open(QIODeviceBase::OpenModeFlag::WriteOnly);
   readBuf.open(QIODeviceBase::ReadOnly);
   reader.setNamespaceProcessing(false);
-  writer.setAutoFormatting(true);
 }
 
 void MessageMan::setPeer(QTcpSocket* peer) {
@@ -69,11 +64,11 @@ qsizetype scanSize(QTcpSocket* socket) {
 }
 } // namespace
 
-void MessageMan::sendMessage(QByteArray const& data) {
+void MessageMan::sendMessage(QByteArray const& data) const {
   sendMessage(data, data.size());
 }
 
-void MessageMan::sendMessage(QByteArray const& data, qsizetype size) {
+void MessageMan::sendMessage(QByteArray const& data, qsizetype size) const {
   if (!isConnected()) {
     return;
   }
@@ -85,20 +80,8 @@ void MessageMan::sendMessage(QByteArray const& data, qsizetype size) {
   socket->write(data, size);
 }
 
-QXmlStreamWriter& MessageMan::getStreamWriter() {
-  // todo not connected
-  if (firstWrite) {
-    writer.writeStartDocument();
-    firstWrite = false;
-  }
-  return writer;
-}
-
-void MessageMan::finishWrite() {
-  writer.writeEndDocument();
-  sendMessage(writeBuf->data(), writeBuf->pos());
-  writeBuf->reset();
-  firstWrite = true;
+Client MessageMan::getClient() const {
+  return Client(this);
 }
 
 void MessageMan::processMessage() {
@@ -115,11 +98,19 @@ void MessageMan::processMessage() {
   }
 }
 
-QXmlStreamReader& MessageMan::getStreamReader() {
+QXmlStreamReader const& MessageMan::getStreamReader() const {
   return reader;
 }
 
-void MessageMan::finishRead() {
+bool MessageMan::xmlReadNextStartElement() const {
+  return reader.readNextStartElement();
+}
+
+void MessageMan::xmlSkipCurrentElement() const {
+  return reader.skipCurrentElement();
+}
+
+void MessageMan::finishRead() const {
   reader.clear();
   readBuf.reset();
   reader.setDevice(&readBuf);

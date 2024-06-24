@@ -12,7 +12,7 @@ class ViewArea : public QWidget {
   Q_OBJECT
 
 public:
-  explicit ViewArea(MessageMan* messageMan, QWidget* parent = nullptr);
+  explicit ViewArea(MessageMan const& messageMan, QWidget* parent = nullptr);
   void setImage(QImage const& image);
 
 private:

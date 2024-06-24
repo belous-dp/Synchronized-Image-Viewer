@@ -1,6 +1,6 @@
 add_library(message_man STATIC
         message_man.cpp message_man.h
-        write_client.cpp write_client.h)
+        client.cpp client.h)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network)
 

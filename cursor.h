@@ -1,16 +1,16 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
-#include <QWidget>
+#include "client.h"
 
-class MessageMan;
-class QTimer;
+#include <QTimer>
+#include <QWidget>
 
 class Cursor : public QWidget {
   Q_OBJECT
 
 public:
-  explicit Cursor(MessageMan* messageMan, QWidget* parent = nullptr);
+  explicit Cursor(MessageMan const& messageMan, QWidget* parent = nullptr);
   void setWorkAreaSize(QSize const& newWorkAreaSize);
 
 private:
@@ -30,8 +30,8 @@ private:
   QRect workArea;
   QPoint offset;
   QPoint lastPos;
-  MessageMan* messageMan;
-  QTimer* timer;
+  Client messageManClient;
+  QTimer timer;
 };
 
 #endif // CURSOR_H
