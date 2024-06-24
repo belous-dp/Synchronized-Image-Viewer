@@ -2,6 +2,7 @@
 An utility for collaborative viewing photos from different devices. Features synchronized cursor. Works over TCP. Built with Qt&C++.
 
 ## Demo
+[Screencast from 24-06-24 06:06:56.webm](https://github.com/belous-dp/Synchronized-Image-Viewer/assets/46475907/db36ea1f-a696-4562-afad-2280ed116d16)
 
 
 ## Installation
